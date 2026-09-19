@@ -117,7 +117,6 @@ class MultiSignalEntityResolver:
         event_score = 1.0 if len(cand_events) > 0 else 0.0
 
         # 7. Timeline Consistency
-        # Check for temporal conflicts or overlapping contradictory commitments
         timeline_score = 0.9 if len(timeline_events) > 0 else 0.5
 
         # 8. Cross-Source Corroboration
@@ -134,7 +133,6 @@ class MultiSignalEntityResolver:
         # Visual similarity bounded as supporting signal
         vis_score = min(1.0, max(0.0, float(visual_similarity_score)))
 
-        # Weighted Composite Score Calculation
         weights = {
             "name": 0.25,
             "username": 0.15,
@@ -168,7 +166,6 @@ class MultiSignalEntityResolver:
             {"signal": "Visual Reference Similarity (Supporting)", "score": round(vis_score * 100), "weight": f"{int(weights['visual']*100)}%", "status": "SUPPORTING"}
         ]
 
-        # Match Decision Status
         if name_score >= 0.85 and (org_score >= 0.7 or username_score >= 0.8 or cross_source_score >= 0.75):
             status = "SUPPORTED"
             rationale = "High lexical, organizational, and cross-platform multi-source corroboration."
@@ -201,4 +198,100 @@ class MultiSignalEntityResolver:
             }
         }
 
+class EntityResolutionService(MultiSignalEntityResolver):
+    def resolve_candidate_profile(
+        self,
+        target_name: str,
+        target_alias: str,
+        target_org: str,
+        target_domain: str,
+        target_context: str,
+        profile: Dict[str, Any],
+        visual_similarity_score: float = 0.0
+    ) -> Dict[str, Any]:
+        p_name = profile.get("display_name", "")
+        p_user = profile.get("username", "")
+        p_desc = profile.get("description", "") or (profile.get("evidence", [""])[0] if profile.get("evidence") else "")
+        p_url = profile.get("profile_url", "") or profile.get("url", "")
+
+        norm_t_name = self.normalize_text(target_name)
+        norm_p_name = self.normalize_text(p_name)
+        if norm_t_name and norm_p_name:
+            if norm_t_name == norm_p_name:
+                name_match = 1.0
+            elif norm_t_name in norm_p_name or norm_p_name in norm_t_name:
+                name_match = 0.85
+            else:
+                name_match = self.token_similarity(target_name, p_name)
+        else:
+            name_match = 0.0
+
+        alias_match = 1.0 if target_alias and target_alias.lower() in str(profile).lower() else 0.0
+        norm_t_user = self.normalize_handle(target_alias)
+        norm_p_user = self.normalize_handle(p_user)
+        username_match = 1.0 if (norm_t_user and norm_p_user and norm_t_user == norm_p_user) else (0.5 if norm_t_user and norm_t_user in norm_p_user else 0.0)
+
+        org_match = 0.0
+        if target_org:
+            norm_t_org = self.normalize_text(target_org)
+            if norm_t_org in self.normalize_text(str(profile)):
+                org_match = 1.0
+            else:
+                org_match = self.token_similarity(target_org, p_desc)
+
+        web_cross_ref = 1.0 if any("website" in str(e).lower() for e in profile.get("evidence", [])) else 0.0
+        project_match = 1.0 if "github" in p_url or "project" in p_desc.lower() or "repo" in p_desc.lower() else 0.0
+        event_match = 1.0 if any(k in p_desc.lower() for k in ["conference", "workshop", "event", "speaker", "hackathon"]) else 0.0
+
+        domain_match = 0.0
+        if target_domain and p_desc:
+            domain_match = self.token_similarity(target_domain, p_desc)
+            if any(w in p_desc.lower() for w in target_domain.lower().split() if len(w) > 3):
+                domain_match = max(domain_match, 0.75)
+
+        timeline_match = 0.85 if p_url else 0.0
+        cross_source_ref = 1.0 if len(profile.get("matched_signals", [])) >= 2 else (0.5 if len(profile.get("matched_signals", [])) == 1 else 0.0)
+        visual_support = min(1.0, max(0.0, float(visual_similarity_score)))
+
+        score = (
+            name_match * 0.25 +
+            org_match * 0.20 +
+            username_match * 0.15 +
+            domain_match * 0.10 +
+            project_match * 0.08 +
+            cross_source_ref * 0.08 +
+            web_cross_ref * 0.05 +
+            timeline_match * 0.04 +
+            visual_support * 0.05
+        )
+
+        if not p_url:
+            ver_status = "NOT_DISCOVERED"
+        elif name_match >= 0.8 and (org_match >= 0.7 or username_match >= 0.8 or cross_source_ref >= 0.75):
+            ver_status = "SUPPORTED"
+        elif name_match >= 0.5:
+            ver_status = "AMBIGUOUS"
+        else:
+            ver_status = "NOT_VERIFIED"
+
+        return {
+            "platform": profile.get("platform"),
+            "verification_status": ver_status,
+            "confidence_score": round(score, 3),
+            "signals": {
+                "name_match": name_match >= 0.7,
+                "alias_match": alias_match > 0,
+                "username_match": username_match >= 0.5,
+                "organization_match": org_match >= 0.6,
+                "website_cross_reference": web_cross_ref > 0,
+                "project_match": project_match > 0,
+                "event_match": event_match > 0,
+                "domain_match": domain_match >= 0.5,
+                "timeline_match": timeline_match > 0,
+                "cross_source_reference": cross_source_ref >= 0.5,
+                "visual_support": visual_support >= 0.7
+            }
+        }
+
 multi_signal_entity_resolver = MultiSignalEntityResolver()
+entity_resolution_service = EntityResolutionService()

@@ -5,6 +5,7 @@ from typing import List, Dict, Any, Optional
 from pydantic import BaseModel
 
 from backend.app.services.discovery.profile_discovery_engine import profile_discovery_engine
+from backend.app.providers.wikidata_provider import wikidata_provider
 
 router = APIRouter(prefix="/discovery", tags=["Profile Discovery"])
 
@@ -30,6 +31,38 @@ def ensure_default_discovery():
             additional_context="Public programming / DSA educator and contributor associated with Vanakkam DSA.",
             image_reference="/hareesh_reference.png"
         )
+
+@router.get("/wikidata", response_model=Dict[str, Any])
+def search_wikidata_entities(name: str):
+    """
+    Direct Wikidata Query Service & Entity Discovery Endpoint.
+    Programmatically searches Wikidata for candidate persons, QIDs, websites, and external profiles.
+    """
+    if not name or not name.strip():
+        raise HTTPException(status_code=400, detail="Name parameter is required.")
+    
+    try:
+        candidates = wikidata_provider.search_person(name=name)
+        sources = [
+            {
+                "source": "Wikidata Query Service",
+                "endpoint": "https://query.wikidata.org/sparql",
+                "retrieved_at": datetime.datetime.now(datetime.timezone.utc).isoformat()
+            }
+        ]
+        return {
+            "query": name,
+            "candidates": candidates,
+            "sources": sources,
+            "errors": []
+        }
+    except Exception as e:
+        return {
+            "query": name,
+            "candidates": [],
+            "sources": [],
+            "errors": [str(e)]
+        }
 
 @router.get("", response_model=List[Dict[str, Any]])
 def get_all_discoveries():

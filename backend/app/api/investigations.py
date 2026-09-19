@@ -19,21 +19,22 @@ router = APIRouter(prefix="/investigations", tags=["Investigations"])
 # In-memory fast cache for active investigations
 INVESTIGATIONS_STORE: Dict[str, Dict[str, Any]] = {}
 
-# Pre-populate default benchmark TRC-001 (Sathana Jayaraman)
-default_inv = pipeline_orchestrator.run_full_pipeline(
-    investigation_id="TRC-001",
-    subject_name="Sathana Jayaraman",
-    alias="Sathana0511",
-    organization="Vel Tech High Tech Dr Rangarajan Dr Sakunthala Engineering College",
-    known_platform="LinkedIn / GitHub / Instagram / Student",
-    additional_context="Public professional profile: Sathana Jayaraman\nGitHub username: Sathana0511\nInstagram username: itz_sathana\nCollege: Vel Tech High Tech Dr Rangarajan Dr Sakunthala Engineering College",
-    image_reference="/sathana_reference.png"
-)
-INVESTIGATIONS_STORE["TRC-001"] = default_inv
+def ensure_default_investigation():
+    if "TRC-001" not in INVESTIGATIONS_STORE:
+        INVESTIGATIONS_STORE["TRC-001"] = pipeline_orchestrator.run_full_pipeline(
+            investigation_id="TRC-001",
+            subject_name="Sathana Jayaraman",
+            alias="Sathana0511",
+            organization="Vel Tech High Tech Dr Rangarajan Dr Sakunthala Engineering College",
+            known_platform="LinkedIn / GitHub / Instagram / Student",
+            additional_context="Public professional profile: Sathana Jayaraman\nGitHub username: Sathana0511\nInstagram username: itz_sathana\nCollege: Vel Tech High Tech Dr Rangarajan Dr Sakunthala Engineering College",
+            image_reference="/sathana_reference.png"
+        )
 
 @router.get("", response_model=List[Dict[str, Any]])
 def get_all_investigations(db: Session = Depends(get_db)):
     """Retrieve list of all active and completed investigations."""
+    ensure_default_investigation()
     return list(INVESTIGATIONS_STORE.values())
 
 @router.post("", response_model=Dict[str, Any])

@@ -88,14 +88,17 @@ class SourceOrchestrator:
                 if connector_name == 'wikidata':
                     items = self.connectors['wikidata'].search_person(primary_name, organization)
                     for item in items:
+                        ent_id = item.get('entity_id', '')
+                        label = item.get('canonical_name') or item.get('label') or primary_name
+                        ent_url = item.get('url') or (item.get('sources', [{}])[0].get('url') if item.get('sources') else f"https://www.wikidata.org/wiki/{ent_id}")
                         rec = NormalizedSourceRecord(
-                            source_id=f"wd-{item.get('entity_id')}",
+                            source_id=f"wd-{ent_id}",
                             source_type='WIKIDATA',
-                            title=f"{item.get('label')} (Wikidata {item.get('entity_id')})",
-                            url=item.get('source_url', f"https://www.wikidata.org/wiki/{item.get('entity_id')}"),
+                            title=f"{label} (Wikidata {ent_id})",
+                            url=ent_url,
                             content=item.get('description', ''),
-                            entities=[{'type': 'person', 'name': item.get('label'), 'wikidata_id': item.get('entity_id')}],
-                            relationships=[{'source': item.get('label'), 'rel': 'described_in', 'target': 'Wikidata'}],
+                            entities=[{'type': 'person', 'name': label, 'wikidata_id': ent_id}],
+                            relationships=[{'source': label, 'rel': 'described_in', 'target': 'Wikidata'}],
                             reliability='HIGH',
                             source_mode='PUBLIC_RETRIEVAL'
                         )
