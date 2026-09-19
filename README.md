@@ -58,6 +58,7 @@ Company Page   → Professional Affiliation
 Event Page     → Hackathons / Conferences
 YouTube        → Interviews / Talks
 
+
 Different Digital Identities
 
 The same person may use different names, aliases or usernames across platforms.
@@ -71,6 +72,7 @@ Priya Sharma
 priya-dev
 
 The system must determine whether these different identities belong to the same person.
+
 
 3. Common Names
 
@@ -87,7 +89,6 @@ Therefore:
 
 Name Equality ≠ Identity Equality
 
-Additional evidence such as organization, education, location or projects is required.
 
 4. Missing Information
 
@@ -122,6 +123,7 @@ Source Comparison
 Temporal Analysis
         ↓
 Conflict Report
+
 6. False Matches
 
 Different people may have similar names, usernames, organizations or activities.
@@ -141,6 +143,7 @@ But could be a different person
 A false match can incorrectly combine two people's digital footprints.
 
 Therefore, TRACEID AI must identify ambiguity and communicate uncertainty instead of forcing an identity match.
+
 
 Core Challenge
 Information Fragmentation
