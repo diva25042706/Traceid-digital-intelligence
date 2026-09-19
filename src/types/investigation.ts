@@ -341,15 +341,20 @@ export interface DiscoveredProfile {
   platform: string;
   display_name: string;
   username: string;
-  url: string;
-  source_type: "PROFESSIONAL" | "COMMUNITY" | "TECHNICAL" | "EDUCATIONAL" | string;
-  category: "PROFESSIONAL" | "COMMUNITY" | "TECHNICAL" | "EDUCATIONAL" | string;
-  description: string;
+  url?: string;
+  profile_url?: string;
+  source_url?: string;
+  source_type?: "PROFESSIONAL" | "COMMUNITY" | "TECHNICAL" | "EDUCATIONAL" | "SOCIAL" | "VIDEO" | "WEBSITE" | "KNOWLEDGE_GRAPH" | string;
+  category?: "PROFESSIONAL" | "COMMUNITY" | "TECHNICAL" | "EDUCATIONAL" | string;
+  description?: string;
   matched_signals: string[];
   evidence: string[];
-  reliability: "HIGH" | "MEDIUM" | "LOW" | string;
+  reliability?: "HIGH" | "MEDIUM" | "LOW" | string;
+  verification_status?: "SUPPORTED" | "AMBIGUOUS" | "CONFLICTING" | "NOT_VERIFIED" | "NOT_DISCOVERED" | string;
   status: "DISCOVERED" | "NOT_DISCOVERED" | string;
-  retrieved_at: string;
+  retrieved_at?: string;
+  signal_matrix?: Record<string, boolean>;
+  confidence_score?: number;
 }
 
 export interface PublicRecordItem {
@@ -375,7 +380,11 @@ export interface ProfileDiscoveryReport {
   status: string;
   queries_generated: string[];
   sources_searched_count: number;
+  candidates_found_count?: number;
   profiles_discovered_count: number;
+  supported_profiles_count?: number;
+  ambiguous_profiles_count?: number;
+  not_verified_count?: number;
   verified_sources_count: number;
   profiles: DiscoveredProfile[];
   public_records: PublicRecordItem[];
@@ -386,10 +395,15 @@ export interface ProfileDiscoveryReport {
     EDUCATIONAL?: DiscoveredProfile[];
     PROJECTS?: DiscoveredProfile[];
     EVENTS?: DiscoveredProfile[];
+    SOCIAL?: DiscoveredProfile[];
+    VIDEO?: DiscoveredProfile[];
+    WEBSITE?: DiscoveredProfile[];
+    KNOWLEDGE_GRAPH?: DiscoveredProfile[];
     [key: string]: DiscoveredProfile[] | undefined;
   };
   confidence_assessment?: string;
   why_this_result?: string[];
+  coverage_notice?: string;
   discovery_summary: string;
   disclaimer: string;
 }
