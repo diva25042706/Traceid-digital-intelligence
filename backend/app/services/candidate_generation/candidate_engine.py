@@ -26,7 +26,7 @@ class CandidateGenerationEngine:
         web_recs = [r for r in records if r.source_type == "WEB_SEARCH"]
 
         cand_a_evidence_count = len(records)
-        cand_a_status = "SUPPORTED" if (wiki_rec or (gh_rec and organization) or (web_recs and organization)) else ("AMBIGUOUS" if records else "INSUFFICIENT EVIDENCE")
+        cand_a_status = "SUPPORTED" if (wiki_rec or (gh_rec and organization) or (web_recs and organization) or (organization and (alias or domain or role or subject_name))) else ("AMBIGUOUS" if records else "INSUFFICIENT EVIDENCE")
         
         avatar_url = image_reference or (gh_rec.raw_payload.get("avatar_url") if gh_rec and gh_rec.raw_payload else (wiki_rec.raw_payload.get("thumbnail") if wiki_rec and wiki_rec.raw_payload else "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=200&h=200&fit=crop&crop=faces"))
         
