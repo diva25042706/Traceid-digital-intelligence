@@ -145,19 +145,18 @@ A false match can incorrectly combine two people's digital footprints.
 Therefore, TRACEID AI must identify ambiguity and communicate uncertainty instead of forcing an identity match.
 
 
-#Core Challenge
-Information Fragmentation
-          +
-Different Digital Identities
-          +
-Common Names
-          +
-Missing Information
-          +
-Conflicting Information
-          +
-False Matches
-          ↓
-Reliable & Explainable Identity Resolution
+# CORE CHALLENGE
 
-
+## Information Fragmentation
+### +
+## Different Digital Identities
+### +
+## Common Names
+### +
+## Missing Information
+### +
+## Conflicting Information
+### +
+## False Matches
+### ↓
+# RELIABLE & EXPLAINABLE IDENTITY RESOLUTION
