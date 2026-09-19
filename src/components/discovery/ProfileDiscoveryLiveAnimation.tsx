@@ -29,21 +29,24 @@ export function ProfileDiscoveryLiveAnimation({
 }: ProfileDiscoveryLiveAnimationProps) {
   const STAGES = [
     { name: "Initializing investigation...", short: "INIT" },
-    { name: "Extracting supporting visual signals...", short: "SIGNALS" },
-    { name: "Normalizing public context...", short: "CONTEXT" },
-    { name: "Generating discovery queries...", short: "QUERIES" },
-    { name: "Searching public sources...", short: "SEARCH" },
-    { name: "Collecting public records...", short: "RECORDS" },
-    { name: "Discovering candidate profiles...", short: "CANDIDATES" },
+    { name: "Validating uploaded image...", short: "IMAGE" },
+    { name: "Extracting identity signals...", short: "SIGNALS" },
+    { name: "Generating identity candidates...", short: "CANDIDATES" },
+    { name: "Generating public search queries...", short: "QUERIES" },
+    { name: "Searching authorized public sources...", short: "SEARCH" },
+    { name: "Discovering public profiles...", short: "PROFILES" },
     { name: "Resolving names and aliases...", short: "RESOLVE" },
-    { name: "Correlating community evidence...", short: "CORRELATE" },
+    { name: "Correlating cross-platform evidence...", short: "CORRELATE" },
+    { name: "Extracting organizations and projects...", short: "EXTRACT" },
     { name: "Verifying source evidence...", short: "VERIFY" },
     { name: "Checking conflicting information...", short: "CONFLICTS" },
-    { name: "Generating profile discovery report...", short: "REPORT" }
+    { name: "Analyzing timeline consistency...", short: "TIMELINE" },
+    { name: "Generating explainable result...", short: "RESULT" },
+    { name: "Preparing investigation report...", short: "REPORT" }
   ];
 
-  const currentStageIndex = STAGES.findIndex(s => s.name === progress.current_stage || progress.current_stage.startsWith("Correlating"));
-  const activeIdx = currentStageIndex >= 0 ? currentStageIndex : (progress.progress_percent === 100 ? 11 : Math.min(11, Math.floor((progress.progress_percent / 100) * 12)));
+  const currentStageIndex = STAGES.findIndex(s => s.name === progress.current_stage || progress.current_stage.toLowerCase().includes(s.short.toLowerCase()));
+  const activeIdx = currentStageIndex >= 0 ? currentStageIndex : (progress.progress_percent === 100 ? 14 : Math.min(14, Math.floor((progress.progress_percent / 100) * 15)));
 
   return (
     <div className="bg-slate-900 border border-slate-800 rounded-3xl p-8 sm:p-12 text-white shadow-2xl relative overflow-hidden my-6">

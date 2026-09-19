@@ -35,46 +35,46 @@ class CandidateGenerationEngine:
             primary_role = primary_role[:77] + "..."
 
         platforms = []
+        # 1. GitHub Platform Extraction
         if gh_rec:
+            gh_username = gh_rec.raw_payload.get("username", alias or subject_name.lower().replace(" ", ""))
             platforms.append({
                 "platform": "GitHub",
-                "handle": gh_rec.raw_payload.get("username", alias or subject_name.lower().replace(" ", "")),
+                "handle": gh_username,
                 "verified": True,
-                "url": gh_rec.url
+                "url": gh_rec.url or f"https://github.com/{gh_username}"
             })
-        elif alias:
-            platforms.append({
-                "platform": "GitHub",
-                "handle": alias.lstrip("@"),
-                "verified": True,
-                "url": f"https://github.com/{alias.lstrip('@')}"
-            })
+        else:
+            # Check for GitHub URL in search records
+            real_gh_rec = next((r for r in records if "github.com/" in r.url.lower() and not any(x in r.url.lower() for x in ["/search", "/topics", "/explore"])), None)
+            if real_gh_rec:
+                gh_user = real_gh_rec.url.split("github.com/")[-1].strip("/").split("/")[0]
+                platforms.append({
+                    "platform": "GitHub",
+                    "handle": gh_user,
+                    "verified": True,
+                    "url": real_gh_rec.url
+                })
+            elif alias:
+                platforms.append({
+                    "platform": "GitHub",
+                    "handle": alias.lstrip("@"),
+                    "verified": False,
+                    "url": f"https://github.com/{alias.lstrip('@')}"
+                })
 
-        # Check for LinkedIn, Instagram, or Domain in records or context
-        if "linkedin" in (domain or "").lower() or any("linkedin" in r.url.lower() for r in records) or "linkedin" in (subject_name + alias).lower():
+        # 2. LinkedIn Platform Extraction (REAL DISCOVERED URL ONLY)
+        real_li_rec = next((r for r in records if "linkedin.com/in/" in r.url.lower()), None)
+        if real_li_rec:
+            slug = real_li_rec.url.split("linkedin.com/in/")[-1].strip("/").split("?")[0]
             platforms.append({
                 "platform": "LinkedIn Public",
-                "handle": subject_name,
+                "handle": slug,
                 "verified": True,
-                "url": f"https://linkedin.com/in/{subject_name.lower().replace(' ', '-')}"
-            })
-        elif not any(p["platform"].startswith("LinkedIn") for p in platforms):
-            platforms.append({
-                "platform": "LinkedIn Public",
-                "handle": subject_name,
-                "verified": True,
-                "url": f"https://linkedin.com/in/{subject_name.lower().replace(' ', '-')}"
+                "url": real_li_rec.url
             })
 
-        if "instagram" in (domain or "").lower() or any("instagram" in r.url.lower() for r in records) or "itz_" in (alias or ""):
-            ig_handle = alias.lstrip("@") if alias and "itz_" in alias else (subject_name.lower().replace(" ", "_") if subject_name else "public_user")
-            platforms.append({
-                "platform": "Instagram",
-                "handle": ig_handle,
-                "verified": True,
-                "url": f"https://instagram.com/{ig_handle}"
-            })
-
+        # 3. Wikipedia / Wikidata
         if wiki_rec:
             platforms.append({
                 "platform": "Wikipedia / Wikidata",
@@ -83,20 +83,22 @@ class CandidateGenerationEngine:
                 "url": wiki_rec.url
             })
 
-        if organization:
+        # 4. Institutional Directory / Web Records
+        inst_rec = next((r for r in records if organization and organization.lower().replace(" ", "") in r.url.lower()), None)
+        if inst_rec:
             platforms.append({
-                "platform": "College / Institutional Registry",
+                "platform": "Institutional Registry",
                 "handle": organization,
                 "verified": True,
-                "url": f"https://www.google.com/search?q={organization.replace(' ', '+')}"
+                "url": inst_rec.url
             })
 
         if not platforms:
             platforms.append({
                 "platform": "Public Web Registries",
-                "handle": alias or subject_name.lower().replace(" ", "_"),
+                "handle": subject_name,
                 "verified": False,
-                "url": f"https://www.google.com/search?q={subject_name}"
+                "url": f"https://duckduckgo.com/?q={urllib.parse.quote(subject_name)}"
             })
 
         supporting_signals = [

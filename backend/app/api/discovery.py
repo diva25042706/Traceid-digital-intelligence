@@ -9,7 +9,7 @@ from backend.app.services.discovery.profile_discovery_engine import profile_disc
 router = APIRouter(prefix="/discovery", tags=["Profile Discovery"])
 
 class ProfileDiscoveryRequest(BaseModel):
-    subject_name: str
+    subject_name: Optional[str] = ""
     alias: Optional[str] = ""
     organization: Optional[str] = ""
     domain: Optional[str] = ""
@@ -40,18 +40,15 @@ def get_all_discoveries():
 @router.post("/profiles", response_model=Dict[str, Any])
 def create_and_run_profile_discovery(payload: ProfileDiscoveryRequest):
     """
-    Checkpoint 3 Case 2: Public Profile Discovery Pipeline.
-    Takes person's image + limited context, dynamically expands search hypotheses,
+    Checkpoint 3 Case 2: Real-Time Public Profile Discovery Pipeline.
+    Takes person's image + optional context, dynamically expands search hypotheses,
     queries permitted public indexers, and extracts verified profiles and records.
     """
-    if not payload.subject_name.strip():
-        raise HTTPException(status_code=400, detail="Subject name is required.")
-
-    disc_id = f"DISC-{len(DISCOVERY_STORE) + 1:03d}"
+    disc_id = f"TRACEID-2026-{uuid.uuid4().hex[:6].upper()}"
     
     result = profile_discovery_engine.run_profile_discovery(
         discovery_id=disc_id,
-        subject_name=payload.subject_name,
+        subject_name=payload.subject_name or "",
         alias=payload.alias or "",
         organization=payload.organization or "",
         domain=payload.domain or "",

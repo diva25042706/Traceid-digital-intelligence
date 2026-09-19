@@ -142,7 +142,9 @@ class SourceOrchestrator:
                         records.append(rec)
 
                 elif connector_name == 'web_search':
-                    web_items = self.connectors['web_search'].search_public_context(primary_name, organization, role)
+                    web_items = self.connectors['web_search'].search_public_query(q)
+                    if not web_items:
+                        web_items = self.connectors['web_search'].search_public_footprint(primary_name, organization, role)
                     for idx, w in enumerate(web_items):
                         rel = self.connectors['official'].evaluate_source_priority(w.get('url', ''))
                         rec = NormalizedSourceRecord(

@@ -388,6 +388,8 @@ export interface ProfileDiscoveryReport {
     EVENTS?: DiscoveredProfile[];
     [key: string]: DiscoveredProfile[] | undefined;
   };
+  confidence_assessment?: string;
+  why_this_result?: string[];
   discovery_summary: string;
   disclaimer: string;
 }

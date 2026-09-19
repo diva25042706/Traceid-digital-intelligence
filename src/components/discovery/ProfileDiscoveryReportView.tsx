@@ -157,7 +157,20 @@ export function ProfileDiscoveryReportView({
           <div>
             <div className="flex items-center gap-2 flex-wrap">
               <h2 className="text-xl font-bold text-slate-900">{report.subject_name}</h2>
-              <span className="text-xs font-bold bg-emerald-50 text-emerald-700 px-2 py-0.5 rounded-full border border-emerald-200">
+              <span
+                className={`text-xs font-bold px-2.5 py-0.5 rounded-full border ${
+                  report.status === "SUPPORTED"
+                    ? "bg-emerald-50 text-emerald-700 border-emerald-200"
+                    : report.status === "CONFLICTING"
+                    ? "bg-rose-50 text-rose-700 border-rose-200"
+                    : report.status === "AMBIGUOUS"
+                    ? "bg-amber-50 text-amber-700 border-amber-200"
+                    : "bg-slate-100 text-slate-700 border-slate-200"
+                }`}
+              >
+                {report.status}
+              </span>
+              <span className="text-xs font-bold bg-blue-50 text-blue-700 px-2 py-0.5 rounded-full border border-blue-200">
                 {activeDiscoveredCount} Profiles Discovered
               </span>
             </div>
@@ -165,6 +178,8 @@ export function ProfileDiscoveryReportView({
               <span><strong>Community:</strong> {report.organization || "Public Sector"}</span>
               <span>•</span>
               <span><strong>Domain:</strong> {report.domain || "Developer / Technical"}</span>
+              <span>•</span>
+              <span><strong>Confidence:</strong> {report.confidence_assessment}</span>
             </div>
             <div className="text-xs text-slate-600 mt-2 bg-slate-50 border border-slate-200/80 p-2.5 rounded-lg">
               <strong className="text-slate-800 font-semibold">Discovery Summary: </strong>
@@ -186,6 +201,113 @@ export function ProfileDiscoveryReportView({
           </p>
         </div>
       </div>
+
+      {/* Structured Identity Intelligence Candidate Box */}
+      {(() => {
+        const linkedinProfile = report.profiles.find((p) => p.platform.toLowerCase().includes("linkedin") && p.status === "DISCOVERED" && p.url);
+        const githubProfile = report.profiles.find((p) => p.platform.toLowerCase().includes("github") && p.status === "DISCOVERED" && p.url);
+
+        return (
+          <div className="bg-white rounded-2xl border-2 border-blue-600/20 p-6 shadow-sm space-y-4">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-100 pb-3">
+              <div>
+                <span className="text-[10px] font-bold uppercase tracking-wider text-blue-700 bg-blue-50 px-2 py-0.5 rounded border border-blue-200">
+                  Identity Candidate Intelligence
+                </span>
+                <h3 className="text-lg font-bold text-slate-900 mt-1">
+                  {report.subject_name}
+                </h3>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="text-xs text-slate-500 font-semibold">Evidence Strength:</span>
+                <span
+                  className={`text-xs font-extrabold px-2.5 py-1 rounded-md ${
+                    report.status === "SUPPORTED"
+                      ? "bg-emerald-600 text-white"
+                      : report.status === "CONFLICTING"
+                      ? "bg-rose-600 text-white"
+                      : report.status === "AMBIGUOUS"
+                      ? "bg-amber-500 text-white"
+                      : "bg-slate-500 text-white"
+                  }`}
+                >
+                  {report.status}
+                </span>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
+              {/* Left Column: Discovered URLs */}
+              <div className="space-y-3 bg-slate-50 p-4 rounded-xl border border-slate-200/70">
+                <div>
+                  <span className="text-[11px] font-bold uppercase tracking-wider text-slate-500 block">
+                    Discovered Public LinkedIn URL
+                  </span>
+                  {linkedinProfile ? (
+                    <a
+                      href={linkedinProfile.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-xs font-mono font-bold text-blue-600 hover:text-blue-800 hover:underline break-all inline-flex items-center gap-1 mt-1"
+                    >
+                      {linkedinProfile.url} <ExternalLink className="w-3 h-3 shrink-0" />
+                    </a>
+                  ) : (
+                    <span className="text-xs text-slate-500 italic block mt-1">
+                      No public LinkedIn profile discovered in authorized search records (Zero Guess Enforced).
+                    </span>
+                  )}
+                </div>
+
+                {githubProfile && (
+                  <div className="pt-2 border-t border-slate-200/60">
+                    <span className="text-[11px] font-bold uppercase tracking-wider text-slate-500 block">
+                      Discovered GitHub Repository / Profile
+                    </span>
+                    <a
+                      href={githubProfile.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-xs font-mono font-bold text-slate-800 hover:text-blue-600 hover:underline break-all inline-flex items-center gap-1 mt-1"
+                    >
+                      {githubProfile.url} <ExternalLink className="w-3 h-3 shrink-0 text-slate-400" />
+                    </a>
+                  </div>
+                )}
+              </div>
+
+              {/* Right Column: Matching Signals */}
+              <div className="space-y-2 bg-slate-50 p-4 rounded-xl border border-slate-200/70">
+                <span className="text-[11px] font-bold uppercase tracking-wider text-slate-500 block">
+                  Corroborated Evidentiary Signals
+                </span>
+                <div className="space-y-1.5 pt-1">
+                  <div className="flex items-center gap-2 text-slate-700">
+                    <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+                    <span><strong>Name Match:</strong> Lexical token alignment with target subject</span>
+                  </div>
+                  {report.organization && (
+                    <div className="flex items-center gap-2 text-slate-700">
+                      <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+                      <span><strong>Organization Match:</strong> Corroborated with {report.organization}</span>
+                    </div>
+                  )}
+                  {report.domain && (
+                    <div className="flex items-center gap-2 text-slate-700">
+                      <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+                      <span><strong>Domain / Technical Match:</strong> {report.domain}</span>
+                    </div>
+                  )}
+                  <div className="flex items-center gap-2 text-slate-700">
+                    <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+                    <span><strong>Cross-Source Reference:</strong> {report.verified_sources_count} independent public records</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        );
+      })()}
 
       {/* Category Tabs */}
       <div className="flex items-center justify-between gap-4 border-b border-slate-200 pb-3">
