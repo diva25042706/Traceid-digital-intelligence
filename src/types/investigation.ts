@@ -355,6 +355,9 @@ export interface DiscoveredProfile {
   retrieved_at?: string;
   signal_matrix?: Record<string, boolean>;
   confidence_score?: number;
+  visual_similarity_score?: number;
+  visual_similarity_percent?: number;
+  visual_match_status?: string;
 }
 
 export interface PublicRecordItem {
@@ -406,6 +409,17 @@ export interface ProfileDiscoveryReport {
   coverage_notice?: string;
   discovery_summary: string;
   disclaimer: string;
+  visual_analysis?: {
+    success: boolean;
+    face_detected: boolean;
+    fingerprint_id?: string;
+    face_box?: any;
+    candidate_matches?: any[];
+    top_candidate?: any;
+    sharpness_score?: number;
+    brightness_score?: number;
+  };
+  input_image_reference?: string;
 }
 
 export interface DiscoveryProgressState {

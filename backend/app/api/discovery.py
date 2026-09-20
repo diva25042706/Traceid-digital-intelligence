@@ -5,6 +5,8 @@ from typing import List, Dict, Any, Optional
 from pydantic import BaseModel
 
 from backend.app.services.discovery.profile_discovery_engine import profile_discovery_engine
+from backend.app.services.discovery.visual_profile_discovery_service import visual_profile_discovery_service
+from backend.app.providers.visual_intelligence_provider import visual_intelligence_provider
 from backend.app.providers.wikidata_provider import wikidata_provider
 
 router = APIRouter(prefix="/discovery", tags=["Profile Discovery"])
@@ -17,6 +19,22 @@ class ProfileDiscoveryRequest(BaseModel):
     additional_context: Optional[str] = ""
     image_reference: Optional[str] = None
     consent_confirmed: bool = True
+
+class VisualAnalysisRequest(BaseModel):
+    image_data: str
+
+class VisualDiscoveryRequest(BaseModel):
+    image_data: str
+    subject_name: Optional[str] = ""
+    alias: Optional[str] = ""
+    organization: Optional[str] = ""
+    domain: Optional[str] = ""
+    additional_context: Optional[str] = ""
+    consent_confirmed: bool = True
+
+class VisualSimilarityRequest(BaseModel):
+    image_a: str
+    image_b: str
 
 DISCOVERY_STORE: Dict[str, Dict[str, Any]] = {}
 
@@ -64,6 +82,53 @@ def search_wikidata_entities(name: str):
             "errors": [str(e)]
         }
 
+@router.post("/visual-analyze", response_model=Dict[str, Any])
+def analyze_visual_photo(payload: VisualAnalysisRequest):
+    """
+    Analyzes an uploaded profile photo:
+    - Detects face and returns normalized bounding box coordinates
+    - Extracts 64-bit perceptual dHash/pHash fingerprint
+    - Identifies candidate person matches from visual knowledge base
+    """
+    if not payload.image_data:
+        raise HTTPException(status_code=400, detail="Image data is required.")
+    
+    res = visual_intelligence_provider.detect_face_and_extract_features(payload.image_data)
+    return res
+
+@router.post("/from-image", response_model=Dict[str, Any])
+def discover_profiles_from_image(payload: VisualDiscoveryRequest):
+    """
+    Takes ANY public profile photo and discovers their authentic profiles across social platforms.
+    Performs visual face analysis, candidate identity linking, multi-platform search,
+    and calculates pairwise visual similarity against all discovered profile avatars.
+    """
+    if not payload.image_data:
+        raise HTTPException(status_code=400, detail="Image data is required.")
+
+    result = visual_profile_discovery_service.discover_from_photo(
+        image_data=payload.image_data,
+        subject_name=payload.subject_name,
+        alias=payload.alias,
+        organization=payload.organization,
+        domain=payload.domain,
+        additional_context=payload.additional_context
+    )
+    
+    disc_id = result.get("discovery_id", f"TRACEID-VIS-{uuid.uuid4().hex[:6].upper()}")
+    DISCOVERY_STORE[disc_id] = result
+    return result
+
+@router.post("/visual-similarity", response_model=Dict[str, Any])
+def compare_visual_similarity(payload: VisualSimilarityRequest):
+    """
+    Calculates pairwise visual similarity score between two images/avatars.
+    """
+    if not payload.image_a or not payload.image_b:
+        raise HTTPException(status_code=400, detail="Both image_a and image_b are required.")
+    
+    return visual_intelligence_provider.calculate_visual_similarity(payload.image_a, payload.image_b)
+
 @router.get("", response_model=List[Dict[str, Any]])
 def get_all_discoveries():
     """Retrieve all executed profile discovery investigations."""
@@ -73,7 +138,7 @@ def get_all_discoveries():
 @router.post("/profiles", response_model=Dict[str, Any])
 def create_and_run_profile_discovery(payload: ProfileDiscoveryRequest):
     """
-    Checkpoint 3 Case 2: Real-Time Public Profile Discovery Pipeline.
+    Real-Time Public Profile Discovery Pipeline.
     Takes person's image + optional context, dynamically expands search hypotheses,
     queries permitted public indexers, and extracts verified profiles and records.
     """

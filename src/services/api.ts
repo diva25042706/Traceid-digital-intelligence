@@ -1204,6 +1204,48 @@ export const api = {
     return [];
   },
 
+  // Visual Intelligence & Photo Discovery Methods
+  async analyzeVisualImage(imageData: string) {
+    const remote = await fetchAPI<any>("/discovery/visual-analyze", {
+      method: "POST",
+      body: JSON.stringify({ image_data: imageData }),
+    });
+    if (remote) return remote;
+    return null;
+  },
+
+  async discoverProfilesFromImage(payload: {
+    imageData: string;
+    subjectName?: string;
+    alias?: string;
+    organization?: string;
+    domain?: string;
+    additionalContext?: string;
+  }) {
+    const remote = await fetchAPI<any>("/discovery/from-image", {
+      method: "POST",
+      body: JSON.stringify({
+        image_data: payload.imageData,
+        subject_name: payload.subjectName,
+        alias: payload.alias,
+        organization: payload.organization,
+        domain: payload.domain,
+        additional_context: payload.additionalContext,
+      }),
+    });
+    if (remote) return remote;
+    return null;
+  },
+
+  async compareVisualSimilarity(imageA: string, imageB: string) {
+    const remote = await fetchAPI<any>("/discovery/visual-similarity", {
+      method: "POST",
+      body: JSON.stringify({ image_a: imageA, image_b: imageB }),
+    });
+    if (remote) return remote;
+    return null;
+  },
+
   // Case 3 — Multi-Platform Correlation Methods
   async analyzeCorrelation(payload: {
     subject_name: string;

@@ -21,15 +21,29 @@ INVESTIGATIONS_STORE: Dict[str, Dict[str, Any]] = {}
 
 def ensure_default_investigation():
     if "TRC-001" not in INVESTIGATIONS_STORE:
-        INVESTIGATIONS_STORE["TRC-001"] = pipeline_orchestrator.run_full_pipeline(
-            investigation_id="TRC-001",
-            subject_name="Sathana Jayaraman",
-            alias="Sathana0511",
-            organization="Vel Tech High Tech Dr Rangarajan Dr Sakunthala Engineering College",
-            known_platform="LinkedIn / GitHub / Instagram / Student",
-            additional_context="Public professional profile: Sathana Jayaraman\nGitHub username: Sathana0511\nInstagram username: itz_sathana\nCollege: Vel Tech High Tech Dr Rangarajan Dr Sakunthala Engineering College",
-            image_reference="/sathana_reference.png"
-        )
+        trc_pre = AUTHORIZED_DATASET.get("investigations", {}).get("TRC-001")
+        if trc_pre:
+            inv_dict = dict(trc_pre)
+            inv_dict["audit_trail"] = investigation_orchestrator.build_audit_trail(
+                investigation_id="TRC-001",
+                subject_name="Sathana Jayaraman",
+                subject_alias="Sathana0511",
+                subject_org="Vel Tech High Tech Dr Rangarajan Dr Sakunthala Engineering College",
+                candidates=inv_dict.get("candidates", []),
+                timeline=inv_dict.get("timeline", []),
+                contradictions_found=0
+            )
+            INVESTIGATIONS_STORE["TRC-001"] = inv_dict
+        else:
+            INVESTIGATIONS_STORE["TRC-001"] = pipeline_orchestrator.run_full_pipeline(
+                investigation_id="TRC-001",
+                subject_name="Sathana Jayaraman",
+                alias="Sathana0511",
+                organization="Vel Tech High Tech Dr Rangarajan Dr Sakunthala Engineering College",
+                known_platform="LinkedIn / GitHub / Instagram / Student",
+                additional_context="Public professional profile: Sathana Jayaraman\nGitHub username: Sathana0511\nInstagram username: itz_sathana\nCollege: Vel Tech High Tech Dr Rangarajan Dr Sakunthala Engineering College",
+                image_reference="/sathana_reference.png"
+            )
 
 @router.get("", response_model=List[Dict[str, Any]])
 def get_all_investigations(db: Session = Depends(get_db)):
@@ -125,6 +139,7 @@ def get_investigation_status(id: str):
 @router.get("/{id}", response_model=Dict[str, Any])
 def get_investigation_by_id(id: str, db: Session = Depends(get_db)):
     """Retrieve full investigation dossier and resolved lattice by ID."""
+    ensure_default_investigation()
     if id not in INVESTIGATIONS_STORE:
         raise HTTPException(status_code=404, detail=f"Investigation '{id}' not found")
     return INVESTIGATIONS_STORE[id]
@@ -132,6 +147,7 @@ def get_investigation_by_id(id: str, db: Session = Depends(get_db)):
 @router.get("/{id}/audit-trail", response_model=List[Dict[str, Any]])
 def get_investigation_audit_trail(id: str):
     """Retrieve the step-by-step investigation replay & audit trail."""
+    ensure_default_investigation()
     inv = INVESTIGATIONS_STORE.get(id)
     if not inv:
         raise HTTPException(status_code=404, detail=f"Investigation '{id}' not found")
@@ -140,6 +156,7 @@ def get_investigation_audit_trail(id: str):
 @router.post("/{id}/review", response_model=Dict[str, Any])
 def submit_human_review(id: str, submission: HumanReviewSubmission):
     """Submit analyst review, accept/reject evidence, set final decision, and sign off."""
+    ensure_default_investigation()
     inv = INVESTIGATIONS_STORE.get(id)
     if not inv:
         raise HTTPException(status_code=404, detail=f"Investigation '{id}' not found")
