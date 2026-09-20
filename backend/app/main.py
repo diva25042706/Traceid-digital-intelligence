@@ -60,9 +60,6 @@ app.include_router(adversarial_router, prefix=settings.API_V1_STR)
 app.include_router(discovery_router, prefix=settings.API_V1_STR)
 app.include_router(correlation_router, prefix=settings.API_V1_STR)
 app.include_router(twin_router, prefix=settings.API_V1_STR)
-app.include_router(discovery_router, prefix="/api")
-app.include_router(correlation_router, prefix="/api")
-app.include_router(twin_router, prefix="/api")
 
 @app.get("/")
 def root():
